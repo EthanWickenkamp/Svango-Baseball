@@ -28,6 +28,9 @@
       <li><a href="/">Home</a></li>
       <li><a href="/items">Items</a></li>
       <li><a href="/itemedit">Edit</a></li>
+      <li><a href="/Teams">Teams</a></li>
+      <li><a href="/Games">Games</a></li>
+      <li><a href="/Players">Players</a></li>
     </ul>
   </nav>
   
