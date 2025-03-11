@@ -1,116 +1,155 @@
-<script>
-    import { onMount } from "svelte";
-  
-    let teams = [];
-    let selectedTeam = "";
-    let players = [];
-    let newPlayerName = "";
-  
-    // Fetch teams when the component mounts.
-    onMount(async () => {
-      try {
-        const res = await fetch("http://localhost:8000/api/teams/");
-        teams = await res.json();
-      } catch (error) {
-        console.error("Error fetching teams:", error);
-      }
+<script lang="ts">
+  export let data;
+  let teams = data.teams;
+  let freeAgents = data.freeAgents; 
+  let draggedPlayer = null;
+
+  // Extract free agents (players with team: null)
+  teams.forEach(team => {
+    freeAgents.push(...team.players.filter(player => player.team === null));
+    team.players = team.players.filter(player => player.team !== null);
+  });
+
+  // Function to handle drag start
+  function handleDragStart(event, player) {
+    draggedPlayer = player;
+    event.dataTransfer.setData("text/plain", JSON.stringify(player));
+  }
+
+  // Function to handle drop
+  async function handleDrop(event, teamId) {
+    event.preventDefault();
+    if (!draggedPlayer) return;
+
+    const playerId = draggedPlayer.id; // Store player ID before resetting draggedPlayer
+
+    // Optimistic UI Update (update frontend immediately)
+    teams.forEach(team => {
+        team.players = team.players.filter(p => p.id !== playerId);
     });
-  
-    // Load the roster for the selected team.
-    async function loadTeamRoster(teamId) {
-      selectedTeam = teamId;
-      try {
-        // Assuming you have an endpoint for retrieving players by team
-        const res = await fetch(`http://localhost:8000/api/teams/${teamId}/players/`);
-        players = await res.json();
-      } catch (error) {
-        console.error("Error fetching roster:", error);
-      }
-    }
-  
-    // Add a new player to the roster.
-    async function addPlayer() {
-      if (!newPlayerName.trim()) return;
-      try {
-        const res = await fetch("http://localhost:8000/api/players/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name: newPlayerName, team: selectedTeam }),
-        });
-        if (res.ok) {
-          const addedPlayer = await res.json();
-          players = [...players, addedPlayer];
-          newPlayerName = "";
-        } else {
-          console.error("Failed to add player");
+
+    if (teamId === null) {
+        freeAgents = [...freeAgents, draggedPlayer];
+    } else {
+        let team = teams.find(t => t.id == teamId);
+        if (team) {
+            team.players = [...team.players, draggedPlayer];
         }
-      } catch (error) {
-        console.error("Error adding player:", error);
-      }
     }
-  
-    // Remove a player from the roster.
-    async function removePlayer(playerId) {
-      try {
-        const res = await fetch(`http://localhost:8000/api/players/${playerId}/`, {
-          method: "DELETE",
+
+    draggedPlayer.team = teamId;
+    draggedPlayer = null;
+
+    // Backend Update
+    try {
+        const res = await fetch(`/api/players/${playerId}/`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ team: teamId })
         });
-        if (res.ok) {
-          players = players.filter(player => player.id !== playerId);
-        } else {
-          console.error("Failed to remove player");
+
+        if (!res.ok) {
+            console.error("Failed to update player team in backend");
         }
-      } catch (error) {
-        console.error("Error removing player:", error);
-      }
+
+        // 🔥 Re-fetch teams from the backend to ensure UI is accurate
+        await refreshTeams();
+
+    } catch (error) {
+        console.error("Error updating player:", error);
     }
-  </script>
-  
-<h1>Welcome to Teams page</h1>
-  
-  <!-- Dropdown to select a team -->
-  <select on:change="{(e) => loadTeamRoster(e.target.value)}">
-    <option value="">Select a team</option>
-    {#each teams as team}
-      <option value="{team.id}">{team.name}</option>
+}
+
+async function refreshTeams() {
+    try {
+        // Fetch teams (only returns players assigned to a team)
+        const teamRes = await fetch('/api/teams/');
+        if (!teamRes.ok) throw new Error('Failed to fetch teams');
+        const fetchedTeams = await teamRes.json();
+
+        // Fetch free agents separately (players with no team)
+        const freeAgentRes = await fetch('/api/players/?team=null');
+        let extractedFreeAgents = [];
+        if (freeAgentRes.ok) {
+            extractedFreeAgents = await freeAgentRes.json();
+        }
+
+        teams = fetchedTeams;  // Update teams list
+        freeAgents = extractedFreeAgents;  // Update free agents list
+    } catch (error) {
+        console.error("Error refreshing teams:", error);
+    }
+}
+
+
+
+  function allowDrop(event) {
+    event.preventDefault();
+  }
+</script>
+
+<h1>Team Management</h1>
+
+<div class="team-container">
+  {#each teams as team}
+    <div 
+      class="team"
+      on:dragover={allowDrop} 
+      on:drop={(e) => handleDrop(e, team.id)}
+    >
+      <h2>{team.name}</h2>
+      <ul>
+        {#each team.players as player (player.id)}
+          <li 
+            draggable="true" 
+            on:dragstart={(e) => handleDragStart(e, player)}
+          >
+            {player.name}
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/each}
+</div>
+
+<!-- Free Agents -->
+<div 
+  class="free-agents"
+  on:dragover={allowDrop} 
+  on:drop={(e) => handleDrop(e, null)}
+>
+  <h2>Free Agents</h2>
+  <ul>
+    {#each freeAgents as player (player.id)}
+      <li 
+        draggable="true" 
+        on:dragstart={(e) => handleDragStart(e, player)}
+      >
+        {player.name}
+      </li>
     {/each}
-  </select>
-  
-  {#if selectedTeam}
-    <h2>Roster for Team {selectedTeam}</h2>
-    <ul>
-      {#each players as player (player.id)}
-        <li>
-          {player.name} 
-          <button on:click="{() => removePlayer(player.id)}">Remove</button>
-        </li>
-      {/each}
-    </ul>
-  
-    <input
-      type="text"
-      placeholder="New player name"
-      bind:value="{newPlayerName}"
-    />
-    <button on:click="{addPlayer}">Add Player</button>
-  {/if}
-  
-  <style>
-    /* Basic styling; adjust as needed */
-    h1, h2 {
-      font-family: Arial, sans-serif;
-    }
-    select, input, button {
-      margin: 0.5em 0;
-    }
-    ul {
-      list-style: none;
-      padding-left: 0;
-    }
-    li {
-      margin: 0.5em 0;
-    }
-  </style>
-  
+  </ul>
+</div>
+
+<style>
+  .team-container {
+    display: flex;
+    gap: 20px;
+  }
+  .team, .free-agents {
+    border: 2px solid #333;
+    padding: 10px;
+    min-width: 200px;
+    background: #f4f4f4;
+  }
+  ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  li {
+    margin: 5px 0;
+    padding: 5px;
+    background: lightgray;
+    cursor: grab;
+  }
+</style>

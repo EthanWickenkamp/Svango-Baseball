@@ -34,11 +34,19 @@ class Game(models.Model):
 
     def __str__(self):
         return f"{self.home_team.name} vs {self.away_team.name} on {self.game_date}"
+    
+    @property
+    def winner(self):
+        if self.home_team_score > self.away_team_score:
+            return self.home_team.name
+        elif self.away_team_score > self.home_team_score:
+            return self.away_team.name
+        return "Tie"
 
 
 class Player(models.Model):
     name = models.CharField(max_length=30)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players", null=True)
 
     def __str__(self):
         return self.name
@@ -67,4 +75,4 @@ class AtBat(models.Model):
     inning = models.PositiveIntegerField()
 
     def __str__(self):
-        return f"{self.player.name} - {self.get_outcome_display()} in inning {self.inning}"
+        return f"{self.gamestat.player.name} - {self.get_outcome_display()} in inning {self.inning}" 
