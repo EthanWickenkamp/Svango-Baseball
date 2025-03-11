@@ -96,6 +96,8 @@ async function refreshTeams() {
       class="team"
       on:dragover={allowDrop} 
       on:drop={(e) => handleDrop(e, team.id)}
+      role="region"
+      aria-label="Drop area"
     >
       <h2>{team.name}</h2>
       <ul>
@@ -117,6 +119,8 @@ async function refreshTeams() {
   class="free-agents"
   on:dragover={allowDrop} 
   on:drop={(e) => handleDrop(e, null)}
+  role="region"
+  aria-label="Drop area"
 >
   <h2>Free Agents</h2>
   <ul>

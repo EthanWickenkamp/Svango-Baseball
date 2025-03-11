@@ -1,18 +1,32 @@
 <script lang="ts">
   export let data;
   let game = data.game;
-  let atBats = data.atBats;
+  let gameStats = data.game.gamestats;
 
-  // Group at-bats by inning
+  // Ensure gameStats exist
+  if (!gameStats) {
+    console.error("GameStats is missing from API response");
+  }
+
+  // Group at-bats by inning and team
   let atBatsByInning = {};
-  atBats.forEach(atBat => {
+
+  gameStats.forEach(stat => {
+    stat.atbats.forEach(atBat => {
       if (!atBatsByInning[atBat.inning]) {
-          atBatsByInning[atBat.inning] = [];
+        atBatsByInning[atBat.inning] = { home: [], away: [] };
       }
-      atBatsByInning[atBat.inning].push(atBat);
+
+      // Sort at-bats based on player's team
+      if (stat.team === game.home_team.name) {
+        atBatsByInning[atBat.inning].home.push({ player: stat.player.name, result: atBat.outcome });
+      } else {
+        atBatsByInning[atBat.inning].away.push({ player: stat.player.name, result: atBat.outcome });
+      }
+    });
   });
 
-  // Extract unique innings for column headers
+  // Extract unique innings for table headers
   let innings = Object.keys(atBatsByInning).map(Number).sort((a, b) => a - b);
 </script>
 
@@ -26,7 +40,7 @@
   <strong>{game.away_team.name}</strong>
 </p>
 
-<h2>At-Bats by Inning</h2>
+<h2>{game.home_team.name} - At-Bats by Inning</h2>
 <table>
   <thead>
     <tr>
@@ -37,14 +51,42 @@
     </tr>
   </thead>
   <tbody>
-    {#each [...game.home_team.players, ...game.away_team.players] as player}
+    {#each gameStats.filter(stat => stat.team === game.home_team.name) as stat}
       <tr>
-        <td>{player.name}</td>
+        <td>{stat.player.name}</td>
         {#each innings as inning}
           <td>
-            {#each atBatsByInning[inning] as atBat}
-              {#if atBat.player.id === player.id}
-                {atBat.result}  <!-- Show result for player's at-bat -->
+            {#each atBatsByInning[inning]?.home as atBat}
+              {#if atBat.player === stat.player.name}
+                {atBat.result.replace("_", " ")}
+              {/if}
+            {/each}
+          </td>
+        {/each}
+      </tr>
+    {/each}
+  </tbody>
+</table>
+
+<h2>{game.away_team.name} - At-Bats by Inning</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Player</th>
+      {#each innings as inning}
+        <th>Inning {inning}</th>
+      {/each}
+    </tr>
+  </thead>
+  <tbody>
+    {#each gameStats.filter(stat => stat.team === game.away_team.name) as stat}
+      <tr>
+        <td>{stat.player.name}</td>
+        {#each innings as inning}
+          <td>
+            {#each atBatsByInning[inning]?.away as atBat}
+              {#if atBat.player === stat.player.name}
+                {atBat.result.replace("_", " ")}
               {/if}
             {/each}
           </td>

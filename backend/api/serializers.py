@@ -13,32 +13,47 @@ class PlayerSerializer(serializers.ModelSerializer):
         model = Player
         fields = '__all__'
 
+
 class TeamSerializer(serializers.ModelSerializer):
-    #nest players in team api response very RESTful less calls
-    players = PlayerSerializer(many=True)
+    players = PlayerSerializer(many=True, read_only=True)
     class Meta:
         model = Team
         fields = '__all__'
 
+
 class AtBatSerializer(serializers.ModelSerializer):
+    player = serializers.SerializerMethodField()
+
     class Meta:
         model = AtBat
-        fields = ['inning', 'outcome']
-
-class GameSerializer(serializers.ModelSerializer):
-    home_team = TeamSerializer()  # Fully serialize home team
-    away_team = TeamSerializer()  # Fully serialize away team
-    winner = serializers.ReadOnlyField()
-    class Meta:
-        model = Game
         fields = '__all__'
 
+    def get_player(self, obj):
+        return obj.gamestat.player.name
 
 
 class GameStatSerializer(serializers.ModelSerializer):
     player = PlayerSerializer()
-    game = GameSerializer()
-    atbats = AtBatSerializer(many=True, read_only=True)
+    team = serializers.SerializerMethodField()
+    atbats = AtBatSerializer(many=True, source="atbat")
+
     class Meta:
         model = GameStat
         fields = '__all__'
+
+    def get_team(self, obj):
+        return obj.player.team.name
+
+
+class GameSerializer(serializers.ModelSerializer):
+    home_team = TeamSerializer(read_only=True)
+    away_team = TeamSerializer(read_only=True)
+    winner = serializers.ReadOnlyField()
+    gamestats = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Game
+        fields = '__all__'
+
+    def get_gamestats(self, obj):
+        return GameStatSerializer(obj.gamestat.all(), many=True).data
