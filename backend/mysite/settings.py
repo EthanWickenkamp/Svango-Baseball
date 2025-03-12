@@ -134,6 +134,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://frontend:5173",
 ]
+# CORS_ALLOW_METHODS = ["GET", "POST", "OPTIONS"]
+# CORS_ALLOW_HEADERS = ["content-type", "authorization"]
+
 # REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

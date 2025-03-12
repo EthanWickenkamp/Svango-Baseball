@@ -27,7 +27,7 @@ class Team(models.Model):
 
 class Player(models.Model):
     name = models.CharField(max_length=30)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players", null=True)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players", null=True, blank=True)
     slug = models.SlugField(unique=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -61,7 +61,7 @@ class Game(models.Model):
 class GameStat(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="gamestat")
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="gamestat")
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="gamestats", null=True, blank=True)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="gamestats", null=True, blank=True) #remove null?
 
     def __str__(self):
         return f"{self.player.name} stats for {self.game}"

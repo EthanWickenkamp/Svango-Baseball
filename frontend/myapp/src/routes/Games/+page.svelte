@@ -65,7 +65,7 @@
 
   h2 {
     font-size: 1.5em;
-    color: #0077cc;
+    color: #000000;
     margin-bottom: 10px;
   }
 

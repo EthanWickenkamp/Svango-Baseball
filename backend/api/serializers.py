@@ -22,8 +22,6 @@ class TeamSerializer(serializers.ModelSerializer):
 
 
 class AtBatSerializer(serializers.ModelSerializer):
-    player = serializers.SerializerMethodField()
-
     class Meta:
         model = AtBat
         fields = '__all__'

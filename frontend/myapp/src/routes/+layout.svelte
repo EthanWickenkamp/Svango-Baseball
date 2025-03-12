@@ -31,6 +31,7 @@
       <li><a href="/teams">Teams</a></li>
       <li><a href="/games">Games</a></li>
       <li><a href="/players">Players</a></li>
+      <li><a href="/start">Start</a></li>
     </ul>
   </nav>
   

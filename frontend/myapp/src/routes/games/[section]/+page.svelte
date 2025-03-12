@@ -3,44 +3,45 @@
   let game = data.game;
   let gameStats = data.game.gamestats;
 
-  // Ensure gameStats exist
   if (!gameStats) {
     console.error("GameStats is missing from API response");
   }
 
-  // Group at-bats by inning and team
+  // Get the highest inning number from gameStats (default to 9)
+  let maxInning = Math.max(9, ...gameStats.flatMap(stat => stat.atbats.map(atBat => atBat.inning)));
+
+  // Generate inning numbers dynamically (always at least 9 innings)
+  let innings = Array.from({ length: maxInning }, (_, i) => i + 1);
+
+  // Collect full player rosters
+  let homePlayers = game.home_team.players || [];
+  let awayPlayers = game.away_team.players || [];
+
+  // Organize at-bats by inning
   let atBatsByInning = {};
 
   gameStats.forEach(stat => {
     stat.atbats.forEach(atBat => {
       if (!atBatsByInning[atBat.inning]) {
-        atBatsByInning[atBat.inning] = { home: [], away: [] };
+        atBatsByInning[atBat.inning] = { home: {}, away: {} };
       }
 
-      // Sort at-bats based on player's team
-      if (stat.team === game.home_team.name) {
-        atBatsByInning[atBat.inning].home.push({ player: stat.player.name, result: atBat.outcome });
-      } else {
-        atBatsByInning[atBat.inning].away.push({ player: stat.player.name, result: atBat.outcome });
+      let teamType = stat.team === game.home_team.name ? "home" : "away";
+      
+      if (!atBatsByInning[atBat.inning][teamType][stat.player.name]) {
+        atBatsByInning[atBat.inning][teamType][stat.player.name] = [];
       }
+
+      atBatsByInning[atBat.inning][teamType][stat.player.name].push(atBat.outcome.replace("_", " "));
     });
   });
 
-  // Extract unique innings for table headers
-  let innings = Object.keys(atBatsByInning).map(Number).sort((a, b) => a - b);
 </script>
 
-<h1>Game Details</h1>
-<p>Date: {new Date(game.game_date).toLocaleDateString()}</p>
+<h1>{game.home_team.name} vs {game.away_team.name} on {new Date(game.game_date).toLocaleDateString()}</h1>
 
-<h2>Teams & Score</h2>
-<p>
-  <strong>{game.home_team.name}</strong> 
-  <span class="game-score">{game.home_team_score} - {game.away_team_score}</span>
-  <strong>{game.away_team.name}</strong>
-</p>
-
-<h2>{game.home_team.name} - At-Bats by Inning</h2>
+<!-- Home Team At-Bats -->
+<h2>{game.home_team.name} <span class="game-score">{game.home_team_score}</span></h2>
 <table>
   <thead>
     <tr>
@@ -51,16 +52,16 @@
     </tr>
   </thead>
   <tbody>
-    {#each gameStats.filter(stat => stat.team === game.home_team.name) as stat}
+    {#each homePlayers as player}
       <tr>
-        <td>{stat.player.name}</td>
+        <td>{player.name}</td>
         {#each innings as inning}
           <td>
-            {#each atBatsByInning[inning]?.home as atBat}
-              {#if atBat.player === stat.player.name}
-                {atBat.result.replace("_", " ")}
-              {/if}
-            {/each}
+            {#if atBatsByInning[inning]?.home[player.name]}
+              {#each atBatsByInning[inning].home[player.name] as result}
+                {result}<br />
+              {/each}
+            {/if}
           </td>
         {/each}
       </tr>
@@ -68,7 +69,8 @@
   </tbody>
 </table>
 
-<h2>{game.away_team.name} - At-Bats by Inning</h2>
+<!-- Away Team At-Bats -->
+<h2>{game.away_team.name} <span class="game-score">{game.away_team_score}</span></h2>
 <table>
   <thead>
     <tr>
@@ -79,16 +81,16 @@
     </tr>
   </thead>
   <tbody>
-    {#each gameStats.filter(stat => stat.team === game.away_team.name) as stat}
+    {#each awayPlayers as player}
       <tr>
-        <td>{stat.player.name}</td>
+        <td>{player.name}</td>
         {#each innings as inning}
           <td>
-            {#each atBatsByInning[inning]?.away as atBat}
-              {#if atBat.player === stat.player.name}
-                {atBat.result.replace("_", " ")}
-              {/if}
-            {/each}
+            {#if atBatsByInning[inning]?.away[player.name]}
+              {#each atBatsByInning[inning].away[player.name] as result}
+                {result}<br />
+              {/each}
+            {/if}
           </td>
         {/each}
       </tr>
@@ -100,13 +102,13 @@
 
 <style>
   h1, h2 {
-    color: #0077cc;
+    color: #000000;
   }
 
   .game-score {
     font-weight: bold;
     font-size: 1.5em;
-    color: #0077cc;
+    color: #756f94;
     margin: 0 10px;
   }
 
@@ -118,7 +120,7 @@
 
   th, td {
     border: 1px solid #ccc;
-    padding: 8px;
+    padding: 10px;
     text-align: center;
   }
 
@@ -128,7 +130,7 @@
   }
 
   button {
-    background-color: #0077cc;
+    background-color: #469717;
     color: white;
     border: none;
     padding: 10px 15px;
@@ -139,6 +141,6 @@
   }
 
   button:hover {
-    background-color: #005fa3;
+    background-color: #469717;
   }
 </style>
