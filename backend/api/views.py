@@ -48,49 +48,49 @@ class AtBatViewSet(viewsets.ModelViewSet):
 def hello_world(request):
     return Response({"message": "Hello, API is working!"})
 
-# @csrf_exempt
-# @api_view(["POST"])
-# def start_game(request):
-#     """
-#     Creates a new game if one doesn't already exist today for the same teams.
-#     Also creates GameStat entries for selected players.
-#     """
-#     home_team_id = request.data.get("home_team_id")
-#     away_team_id = request.data.get("away_team_id")
-#     selected_player_ids = request.data.get("players", [])
 
-#     if not home_team_id or not away_team_id or not selected_player_ids:
-#         return Response({"error": "Home team, away team, and players are required"}, status=400)
-
-#     try:
-#         home_team = Team.objects.get(id=home_team_id)
-#         away_team = Team.objects.get(id=away_team_id)
-#     except Team.DoesNotExist:
-#         return Response({"error": "Invalid team IDs"}, status=400)
-
-#     today = now().date()
-#     game, created = Game.objects.get_or_create(
-#         home_team=home_team,
-#         away_team=away_team,
-#         game_date=today
-#     )
-
-#     # Create GameStat entries for selected players
-#     for player_id in selected_player_ids:
-#         try:
-#             player = Player.objects.get(id=player_id)
-#             GameStat.objects.get_or_create(player=player, game=game, team=player.team)
-#         except Player.DoesNotExist:
-#             continue  # Skip invalid players
-
-#     return Response({"game_id": game.id, "message": "Game started successfully"}, status=201)
-
-@api_view(['GET', 'POST'])  # Temporarily allow GET for testing
+@api_view(["POST"])
 def start_game(request):
-    if request.method == "GET":
-        return Response({"message": "GET request successful! API is correctly mapped."}, status=200)
+    """
+    Creates a new game if one doesn't already exist today for the same teams.
+    Also creates GameStat entries for selected players.
+    """
+    home_team_id = request.data.get("home_team_id")
+    away_team_id = request.data.get("away_team_id")
+    selected_player_ids = request.data.get("players", [])
 
-    if request.method == "POST":
-        return Response({"message": "Game Started!"}, status=201)
+    if not home_team_id or not away_team_id or not selected_player_ids:
+        return Response({"error": "Home team, away team, and players are required"}, status=400)
 
-    return Response({"error": "Method Not Allowed"}, status=405)
+    try:
+        home_team = Team.objects.get(id=home_team_id)
+        away_team = Team.objects.get(id=away_team_id)
+    except Team.DoesNotExist:
+        return Response({"error": "Invalid team IDs"}, status=400)
+
+    today = now().date()
+    game, created = Game.objects.get_or_create(
+        home_team=home_team,
+        away_team=away_team,
+        game_date=today
+    )
+
+    # Create GameStat entries for selected players
+    for player_id in selected_player_ids:
+        try:
+            player = Player.objects.get(id=player_id)
+            GameStat.objects.get_or_create(player=player, game=game, team=player.team)
+        except Player.DoesNotExist:
+            continue  # Skip invalid players
+
+    return Response({"game_id": game.id, "message": "Game started successfully"}, status=201)
+
+# @api_view(['GET', 'POST'])  # Temporarily allow GET for testing
+# def start_game(request):
+#     if request.method == "GET":
+#         return Response({"message": "GET request successful! API is correctly mapped."}, status=200)
+
+#     if request.method == "POST":
+#         return Response({"message": "Game Started!"}, status=201)
+
+#     return Response({"error": "Method Not Allowed"}, status=405)
