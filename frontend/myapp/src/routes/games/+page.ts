@@ -8,7 +8,7 @@ export const load: PageLoad = async ({ fetch }) => {
 
         // 🔥 Group games by day (YYYY-MM-DD format)
         const gamesByDay = games.reduce((days, game) => {
-            const gameDay = game.game_date; // Already in YYYY-MM-DD format
+            const gameDay = game.date; // Already in YYYY-MM-DD format
             if (!days[gameDay]) days[gameDay] = [];
             days[gameDay].push(game);
             return days;

@@ -38,7 +38,7 @@
 
 </script>
 
-<h1>{game.home_team.name} vs {game.away_team.name} on {new Date(game.game_date).toLocaleDateString()}</h1>
+<h1>{game.home_team.name} vs {game.away_team.name} on {new Date(game.date).toLocaleDateString()}</h1>
 
 <!-- Home Team At-Bats -->
 <h2>{game.home_team.name} <span class="game-score">{game.home_team_score}</span></h2>

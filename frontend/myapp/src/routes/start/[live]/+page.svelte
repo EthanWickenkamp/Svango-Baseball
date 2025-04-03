@@ -4,7 +4,7 @@
       id: number;
       home_team: { id: number; name: string };
       away_team: { id: number; name: string };
-      game_date: string;
+      date: string;
       home_team_score: number;
       away_team_score: number;
     };
@@ -13,7 +13,7 @@
 
 <h1>Game {data.game.id}</h1>
 
-<p><strong>Date:</strong> {data.game.game_date}</p>
+<p><strong>Date:</strong> {data.game.date}</p>
 
 <h2>Teams</h2>
 <p><strong>Home:</strong> {data.game.home_team.name}</p>

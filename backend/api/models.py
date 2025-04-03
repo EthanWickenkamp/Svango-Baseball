@@ -27,8 +27,8 @@ class Team(models.Model):
 
 class Player(models.Model):
     name = models.CharField(max_length=30)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players", null=True, blank=True)
     slug = models.SlugField(unique=True, blank=True)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players", null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -40,14 +40,14 @@ class Player(models.Model):
 
 
 class Game(models.Model):
-    game_date = models.DateField()
+    date = models.DateField()
+    home_score = models.PositiveIntegerField(default=0)
+    away_score = models.PositiveIntegerField(default=0)
     home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="home_games")
     away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="away_games")
-    home_team_score = models.PositiveIntegerField(default=0)
-    away_team_score = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return f"{self.home_team.name} vs {self.away_team.name} on {self.game_date}"
+        return f"{self.home_team.name} vs {self.away_team.name} on {self.date}"
     
     @property
     def winner(self):

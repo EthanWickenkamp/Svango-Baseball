@@ -8,7 +8,12 @@ from rest_framework import viewsets
 from .models import Item, Team, Game, Player, GameStat, AtBat
 from .serializers import ItemSerializer, TeamSerializer, GameSerializer, PlayerSerializer, GameStatSerializer, AtBatSerializer
 
+
+@api_view(["GET"])
+def hello_world(request):
+    return Response({"message": "Hello, API is working!"})
 # Create your views here.
+
 
 class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
@@ -24,7 +29,6 @@ class PlayerViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Player.objects.all()
         team_param = self.request.query_params.get('team')
-
         if team_param == "null":
             return queryset.filter(team__isnull=True)
         elif team_param is not None:
@@ -42,11 +46,6 @@ class GameStatViewSet(viewsets.ModelViewSet):
 class AtBatViewSet(viewsets.ModelViewSet):
     queryset = AtBat.objects.all()
     serializer_class = AtBatSerializer
-
-
-@api_view(["GET"])
-def hello_world(request):
-    return Response({"message": "Hello, API is working!"})
 
 
 @api_view(["POST"])
@@ -72,7 +71,7 @@ def start_game(request):
     game, created = Game.objects.get_or_create(
         home_team=home_team,
         away_team=away_team,
-        game_date=today
+        date=today
     )
 
     # Create GameStat entries for selected players
